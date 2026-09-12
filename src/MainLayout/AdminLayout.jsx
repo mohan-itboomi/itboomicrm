@@ -34,7 +34,7 @@ const allLinks = [
   ["Dashboard", "/dashboard", DashboardIcon, ["admin", "employee", "web-developer", "mobile-developer", "team-lead", "tester", "bd"]],
   ["Employees", "/employees", PeopleIcon, ["admin"]],
   ["Teams", "/teams", GroupsIcon, ["admin", "team-lead"]],
-  ["Projects", "/projects", FolderIcon, ["admin", "team-lead", "bd"]],
+  ["Projects", "/projects", FolderIcon, ["admin", "team-lead", "bd", "project-coordinator"]],
   ["FRD & Scope", "/frd", DescriptionRoundedIcon, ["admin", "employee", "web-developer", "mobile-developer", "team-lead", "tester", "bd", "project-coordinator"]],
   ["Tasks", "/tasks", AssignmentIcon, ["admin", "team-lead", "project-coordinator", "employee", "web-developer", "mobile-developer", "tester"]],
   ["Bugs", "/bugs", BugReportIcon, ["admin", "tester", "web-developer", "mobile-developer"]],

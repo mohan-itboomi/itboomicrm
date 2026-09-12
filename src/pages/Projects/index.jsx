@@ -25,10 +25,13 @@ export default function Projects() {
   const navigate = useNavigate();
   const [rows, setRows] = useState([]);
   const [search, setSearch] = useState("");
+  const currentUser = JSON.parse(localStorage.getItem("adminUser") || "{}");
   const currentRole = String(
-    JSON.parse(localStorage.getItem("adminUser") || "{}").role || "",
+    currentUser.role || currentUser.accessRole || "",
   ).toLowerCase();
-  const canManageProjects = ["admin", "bd"].includes(currentRole);
+  const canManageProjects = ["admin", "bd", "project-coordinator"].includes(
+    currentRole,
+  );
   const canDeleteProjects = currentRole === "admin";
   const load = () =>
     ApiService.getProjects({ search }).then((response) =>

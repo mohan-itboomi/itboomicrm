@@ -48,8 +48,10 @@ const formatScope = (value) => {
   return value || "Not provided";
 };
 
-const getFrdDownloadUrl = (url) =>
-  String(url || "").replace("/image/upload/", "/raw/upload/");
+// Keep the Cloudinary URL supplied by the API unchanged. FRD files may be
+// served as image resources, so converting image/upload to raw/upload breaks
+// valid document URLs.
+const getFrdDownloadUrl = (url) => String(url || "");
 
 const getFrdVersions = (project) => {
   if (Array.isArray(project?.frd)) {
@@ -76,6 +78,24 @@ const formatDate = (date) => {
     day: "2-digit",
     month: "short",
     year: "numeric",
+  });
+};
+
+const formatDateTime = (date) => {
+  if (!date) return "Not available";
+
+  const parsed = new Date(date);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return "Not available";
+  }
+
+  return parsed.toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 };
 
@@ -1138,17 +1158,11 @@ export default function ProjectDocuments() {
                                   {/* Bottom metadata */}
 
                                   <Stack
-                                    direction={{
-                                      xs: "column",
-                                      sm: "row",
-                                    }}
-                                    spacing={{
-                                      xs: 1,
-                                      sm: 3,
-                                    }}
+                                    direction="column"
+                                    spacing={1}
                                     divider={
                                       <Divider
-                                        orientation="vertical"
+                                        orientation="horizontal"
                                         flexItem
                                       />
                                     }
@@ -1180,7 +1194,7 @@ export default function ProjectDocuments() {
                                       </Typography>
                                     </Stack>
 
-                                    <Stack
+                                    {/* <Stack
                                       direction="row"
                                       spacing={0.75}
                                       alignItems="center"
@@ -1207,48 +1221,62 @@ export default function ProjectDocuments() {
                                           ? phase.deliverables.length
                                           : 0}
                                       </Typography>
+                                    </Stack> */}
+
+                                    <Stack
+                                      direction="row"
+                                      spacing={0.75}
+                                      alignItems="center"
+                                    >
+                                      <AccessTimeRoundedIcon
+                                        sx={{
+                                          fontSize: 17,
+                                          color: "#8a96a3",
+                                        }}
+                                      />
+
+                                      <Typography
+                                        variant="caption"
+                                        color="text.secondary"
+                                      >
+                                        Created:
+                                      </Typography>
+
+                                      <Typography
+                                        variant="caption"
+                                        fontWeight={750}
+                                      >
+                                        {formatDateTime(phase.createdAt)}
+                                      </Typography>
+                                    </Stack>
+
+                                    <Stack
+                                      direction="row"
+                                      spacing={0.75}
+                                      alignItems="center"
+                                    >
+                                      <AccessTimeRoundedIcon
+                                        sx={{
+                                          fontSize: 17,
+                                          color: "#8a96a3",
+                                        }}
+                                      />
+
+                                      <Typography
+                                        variant="caption"
+                                        color="text.secondary"
+                                      >
+                                        Last updated:
+                                      </Typography>
+
+                                      <Typography
+                                        variant="caption"
+                                        fontWeight={750}
+                                      >
+                                        {formatDateTime(phase.updatedAt)}
+                                      </Typography>
                                     </Stack>
                                   </Stack>
-
-                                  {/* Deliverables */}
-
-                                  {Array.isArray(phase.deliverables) &&
-                                    phase.deliverables.length > 0 && (
-                                      <Box
-                                        sx={{
-                                          p: 1.5,
-                                          borderRadius: 2,
-                                          backgroundColor: "#f7f9fb",
-                                        }}
-                                      >
-                                        <Typography
-                                          variant="caption"
-                                          color="text.secondary"
-                                          fontWeight={700}
-                                          display="block"
-                                          sx={{ mb: 0.75 }}
-                                        >
-                                          Phase Deliverables
-                                        </Typography>
-
-                                        <Stack spacing={0.5}>
-                                          {phase.deliverables.map(
-                                            (deliverable, deliverableIndex) => (
-                                              <Typography
-                                                key={deliverableIndex}
-                                                variant="body2"
-                                              >
-                                                •{" "}
-                                                {typeof deliverable === "string"
-                                                  ? deliverable
-                                                  : deliverable?.name ||
-                                                    JSON.stringify(deliverable)}
-                                              </Typography>
-                                            ),
-                                          )}
-                                        </Stack>
-                                      </Box>
-                                    )}
                                 </Stack>
                               </CardContent>
                             </Card>
@@ -1302,7 +1330,7 @@ export default function ProjectDocuments() {
                                 >
                                   v{document?.version || "1.0"}
                                 </Button>
-                                {document?._id && (
+                                {/* {document?._id && (
                                   <Button
                                     size="small"
                                     color="error"
@@ -1316,7 +1344,7 @@ export default function ProjectDocuments() {
                                   >
                                     Delete
                                   </Button>
-                                )}
+                                )} */}
                               </Stack>
                             );
                           })}

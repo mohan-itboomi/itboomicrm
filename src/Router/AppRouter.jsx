@@ -49,7 +49,7 @@ export const router = createBrowserRouter([
           {
             path: "projects",
             element: (
-              <RoleGate roles={["admin", "team-lead", "bd"]}>
+              <RoleGate roles={["admin", "team-lead", "bd", "project-coordinator"]}>
                 <Projects />
               </RoleGate>
             ),
@@ -57,7 +57,7 @@ export const router = createBrowserRouter([
           {
             path: "projects/:id",
             element: (
-              <RoleGate roles={["admin", "team-lead", "bd"]}>
+              <RoleGate roles={["admin", "team-lead", "bd", "project-coordinator"]}>
                 <ProjectWorkspace />
               </RoleGate>
             ),

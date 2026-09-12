@@ -428,7 +428,7 @@ export default function ProjectWorkspace() {
       </Tabs>
       {tab === 0 && (
         <Grid container spacing={2}>
-          <Grid item xs={12} md={5}>
+          <Grid item xs={12} md={4}>
             <Card>
               <CardContent>
                 <Stack component="form" onSubmit={createModule} spacing={2}>
@@ -478,7 +478,7 @@ export default function ProjectWorkspace() {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} md={7}>
+          <Grid item xs={12} md={8}>
             <Stack spacing={1.5}>
               {modules.map((module) => (
                 <Card key={module._id}>
@@ -519,7 +519,7 @@ export default function ProjectWorkspace() {
       )}
       {tab === 1 && (
         <Grid container spacing={3}>
-          <Grid item xs={12} md={5}>
+          <Grid item xs={12} md={4}>
             <Card>
               <CardContent>
                 <Stack component="form" onSubmit={createTask} spacing={2}>
@@ -615,7 +615,7 @@ export default function ProjectWorkspace() {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} md={7}>
+          <Grid item xs={12} md={8}>
             <Stack spacing={3}>
               <TaskSection
                 title="Project Implementation"
