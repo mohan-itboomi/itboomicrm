@@ -48,6 +48,9 @@ const formatScope = (value) => {
   return value || "Not provided";
 };
 
+const getFrdDownloadUrl = (url) =>
+  String(url || "").replace("/image/upload/", "/raw/upload/");
+
 const getFrdVersions = (project) => {
   if (Array.isArray(project?.frd)) {
     return project.frd;
@@ -240,21 +243,13 @@ function SectionHeader({ icon, title, subtitle, action }) {
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Main Component                                                             */
-/* -------------------------------------------------------------------------- */
-
 export default function ProjectDocuments() {
   const [projects, setProjects] = useState([]);
   const [selectedId, setSelectedId] = useState("");
   const [selectedVersion, setSelectedVersion] = useState("");
+  const [expandedPhaseId, setExpandedPhaseId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  /* ------------------------------------------------------------------------ */
-  /* Load projects                                                            */
-  /* ------------------------------------------------------------------------ */
-
   useEffect(() => {
     let mounted = true;
 
@@ -300,10 +295,6 @@ export default function ProjectDocuments() {
     };
   }, []);
 
-  /* ------------------------------------------------------------------------ */
-  /* Selected project                                                         */
-  /* ------------------------------------------------------------------------ */
-
   const selectedProject = useMemo(
     () => projects.find((project) => project._id === selectedId),
     [projects, selectedId],
@@ -325,6 +316,48 @@ export default function ProjectDocuments() {
       ) || frdVersions[frdVersions.length - 1]
     );
   }, [frdVersions, selectedVersion]);
+
+  const downloadFrd = async () => {
+    if (!selectedFrd?.content) return;
+
+    try {
+      const response = await ApiService.downloadFile(
+        getFrdDownloadUrl(selectedFrd.content),
+      );
+      const blobUrl = URL.createObjectURL(response.data);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `FRD-${selectedProject?.name || "document"}-v${selectedFrd.version || "1.0"}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      window.open(
+        getFrdDownloadUrl(selectedFrd.content),
+        "_blank",
+        "noopener,noreferrer",
+      );
+    }
+  };
+
+  const deleteFrd = async (frdId) => {
+    if (!window.confirm("Delete this FRD version?")) return;
+
+    try {
+      await ApiService.deleteProjectFrd(selectedProject._id, frdId);
+      const response = await ApiService.getProjectById(selectedProject._id);
+      const updatedProject = response.data?.data || response.data;
+      setProjects((current) =>
+        current.map((project) =>
+          project._id === updatedProject._id ? updatedProject : project,
+        ),
+      );
+      setSelectedVersion("");
+    } catch {
+      setError("FRD version could not be deleted.");
+    }
+  };
 
   const projectProgress = getProjectProgress(selectedProject);
 
@@ -350,7 +383,7 @@ export default function ProjectDocuments() {
 
   if (loading) {
     return (
-      <Stack spacing={3}>
+      <Stack spacing={3} sx={{ width: "100%", maxWidth: "none" }}>
         <CustomPageHeader
           title="FRD & Project Planning"
           subtitle="Manage project requirements, scope, phases and documentation."
@@ -386,7 +419,7 @@ export default function ProjectDocuments() {
   /* ------------------------------------------------------------------------ */
 
   return (
-    <Stack spacing={3}>
+    <Stack spacing={3} sx={{ width: "100%", maxWidth: "none" }}>
       {/* ------------------------------------------------------------------ */}
       {/* Header                                                             */}
       {/* ------------------------------------------------------------------ */}
@@ -425,19 +458,23 @@ export default function ProjectDocuments() {
           </CardContent>
         </Card>
       ) : (
-        <Grid container spacing={2.5} alignItems="flex-start">
+        <Grid
+          container
+          direction="column"
+          spacing={2.5}
+          alignItems="stretch"
+          sx={{ width: "100%", maxWidth: "none", m: 0 }}
+        >
           {/* ================================================================ */}
           {/* PROJECT SIDEBAR                                                  */}
           {/* ================================================================ */}
 
-          <Grid item xs={12} md={3.5}>
+          <Grid item xs={12} sx={{ minWidth: 0, width: "100%" }}>
             <Card
               sx={{
                 border: "1px solid #e5eaf0",
                 boxShadow: "0 8px 30px rgba(25, 50, 75, 0.05)",
                 overflow: "hidden",
-                position: { md: "sticky" },
-                top: { md: 20 },
               }}
             >
               {/* Sidebar header */}
@@ -468,7 +505,7 @@ export default function ProjectDocuments() {
                   </Box>
 
                   <Box>
-                    <Typography fontWeight={850}>Project Folders</Typography>
+                    <Typography fontWeight={850}>Project List</Typography>
 
                     <Typography variant="caption" color="text.secondary">
                       {projects.length} project
@@ -480,11 +517,21 @@ export default function ProjectDocuments() {
 
               {/* Projects */}
 
-              <Stack spacing={1} sx={{ p: 1.25 }}>
+              <Box
+                sx={{
+                  p: 1.25,
+                  display: "grid",
+                  gridTemplateColumns: {
+                    xs: "1fr",
+                    sm: "repeat(2, minmax(0, 1fr))",
+                    md: "repeat(3, minmax(0, 1fr))",
+                    lg: "repeat(5, minmax(0, 1fr))",
+                  },
+                  gap: 1,
+                }}
+              >
                 {projects.map((project) => {
                   const active = selectedId === project._id;
-                  const progress = getProjectProgress(project);
-
                   return (
                     <Card
                       key={project._id}
@@ -546,61 +593,21 @@ export default function ProjectDocuments() {
                             >
                               {project.projectCode || "No project code"}
                             </Typography>
-
-                            {/* <Box sx={{ mt: 1 }}>
-                              <Stack
-                                direction="row"
-                                justifyContent="space-between"
-                                sx={{ mb: 0.5 }}
-                              >
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                >
-                                  Progress
-                                </Typography>
-
-                                <Typography variant="caption" fontWeight={700}>
-                                  {progress}%
-                                </Typography>
-                              </Stack>
-
-                              <LinearProgress
-                                variant="determinate"
-                                value={progress}
-                                sx={{
-                                  height: 5,
-                                  borderRadius: 5,
-                                  backgroundColor: "#e9eef3",
-                                  "& .MuiLinearProgress-bar": {
-                                    borderRadius: 5,
-                                  },
-                                }}
-                              />
-                            </Box> */}
                           </Box>
                         </Stack>
                       </CardContent>
                     </Card>
                   );
                 })}
-              </Stack>
+              </Box>
             </Card>
           </Grid>
-
-          {/* ================================================================ */}
-          {/* PROJECT CONTENT                                                  */}
-          {/* ================================================================ */}
-
-          <Grid item xs={12} md={8.5}>
+          <Grid item xs={12} sx={{ minWidth: 0, width: "100%" }}>
             {selectedProject && (
               <Stack spacing={2.5}>
-                {/* ========================================================== */}
-                {/* PROJECT HERO                                                */}
-                {/* ========================================================== */}
-
                 <Card
                   sx={{
+                    display: "none",
                     border: "1px solid #e5eaf0",
                     boxShadow: "0 10px 35px rgba(25, 50, 75, 0.06)",
                     overflow: "hidden",
@@ -745,42 +752,6 @@ export default function ProjectDocuments() {
                           />
                         </Grid>
                       </Grid>
-
-                      {/* Overall progress */}
-
-                      {/* <Box>
-                        <Stack
-                          direction="row"
-                          justifyContent="space-between"
-                          alignItems="center"
-                          sx={{ mb: 0.75 }}
-                        >
-                          <Typography variant="body2" fontWeight={800}>
-                            Overall Project Progress
-                          </Typography>
-
-                          <Typography
-                            variant="body2"
-                            fontWeight={900}
-                            color="primary"
-                          >
-                            {projectProgress}%
-                          </Typography>
-                        </Stack>
-
-                        <LinearProgress
-                          variant="determinate"
-                          value={projectProgress}
-                          sx={{
-                            height: 9,
-                            borderRadius: 5,
-                            backgroundColor: "#e7edf2",
-                            "& .MuiLinearProgress-bar": {
-                              borderRadius: 5,
-                            },
-                          }}
-                        />
-                      </Box> */}
                     </Stack>
                   </Box>
                 </Card>
@@ -789,6 +760,7 @@ export default function ProjectDocuments() {
 
                 <Card
                   sx={{
+                    order: 3,
                     border: "1px solid #e5eaf0",
                     boxShadow: "0 8px 30px rgba(25, 50, 75, 0.04)",
                   }}
@@ -937,13 +909,9 @@ export default function ProjectDocuments() {
                     </Box>
                   </CardContent>
                 </Card>
-
-                {/* ========================================================== */}
-                {/* PHASES                                                      */}
-                {/* ========================================================== */}
-
                 <Card
                   sx={{
+                    order: 3,
                     border: "1px solid #e5eaf0",
                     boxShadow: "0 8px 30px rgba(25, 50, 75, 0.04)",
                   }}
@@ -984,17 +952,35 @@ export default function ProjectDocuments() {
                         </Typography>
                       </Box>
                     ) : (
-                      <Stack spacing={1.5}>
+                      <Box
+                        sx={{
+                          display: "grid",
+                          gridTemplateColumns: {
+                            xs: "1fr",
+                            sm: "repeat(2, minmax(0, 1fr))",
+                            lg: "repeat(3, minmax(0, 1fr))",
+                          },
+                          gap: 1.5,
+                        }}
+                      >
                         {phases.map((phase, index) => {
                           const progress = getPhaseProgress(phase);
 
                           return (
                             <Card
                               key={phase._id || `${phase.name}-${index}`}
+                              onClick={() =>
+                                setExpandedPhaseId(
+                                  expandedPhaseId === (phase._id || index)
+                                    ? ""
+                                    : phase._id || index,
+                                )
+                              }
                               sx={{
                                 border: "1px solid #e5ebf0",
                                 boxShadow: "none",
                                 borderRadius: 2.5,
+                                cursor: "pointer",
                               }}
                             >
                               <CardContent
@@ -1072,21 +1058,49 @@ export default function ProjectDocuments() {
                                   {/* Description */}
 
                                   {phase.description && (
-                                    <Typography
-                                      variant="body2"
-                                      color="text.secondary"
+                                    <Box
+                                      component="ul"
                                       sx={{
-                                        lineHeight: 1.6,
+                                        m: 0,
+                                        pl: 2.5,
+                                        color: "text.secondary",
                                       }}
                                     >
-                                      {phase.description}
-                                    </Typography>
+                                      {String(phase.description)
+                                        .split(/\\n|\n|[.!?]\s+/)
+                                        .map((point) => point.trim())
+                                        .filter(Boolean)
+                                        .map((point, pointIndex) => (
+                                          <Typography
+                                            component="li"
+                                            variant="body2"
+                                            key={pointIndex}
+                                            sx={{
+                                              lineHeight: 1.6,
+                                              mb: 0.5,
+                                              ...(expandedPhaseId !==
+                                                (phase._id || index) && {
+                                                  display: pointIndex < 5 ? "list-item" : "none",
+                                                }),
+                                            }}
+                                          >
+                                            {point.replace(/^[-•*]\s*/, "")}
+                                          </Typography>
+                                      ))}
+                                    </Box>
                                   )}
+                                  {phase.description &&
+                                    expandedPhaseId !== (phase._id || index) &&
+                                    String(phase.description).split(/\\n|\n|[.!?]\s+/).filter(Boolean).length > 5 && (
+                                      <Typography variant="caption" color="primary" sx={{ fontWeight: 700 }}>
+                                        Click to view full phase details
+                                      </Typography>
+                                    )}
 
                                   {/* Progress */}
 
                                   <Box>
-                                    <Stack
+                                    {/* <Stack
                                       direction="row"
                                       justifyContent="space-between"
                                       sx={{ mb: 0.7 }}
@@ -1105,7 +1119,7 @@ export default function ProjectDocuments() {
                                       >
                                         {progress}%
                                       </Typography>
-                                    </Stack>
+                                    </Stack> */}
 
                                     <LinearProgress
                                       variant="determinate"
@@ -1240,17 +1254,13 @@ export default function ProjectDocuments() {
                             </Card>
                           );
                         })}
-                      </Stack>
+                      </Box>
                     )}
                   </CardContent>
                 </Card>
-
-                {/* ========================================================== */}
-                {/* FRD                                                         */}
-                {/* ========================================================== */}
-
                 <Card
                   sx={{
+                    order: 1,
                     border: "1px solid #e5eaf0",
                     boxShadow: "0 8px 30px rgba(25, 50, 75, 0.04)",
                   }}
@@ -1268,7 +1278,7 @@ export default function ProjectDocuments() {
 
                         <Stack
                           direction="row"
-                          spacing={1}
+                          spacing={1.5}
                           flexWrap="wrap"
                           useFlexGap
                         >
@@ -1283,23 +1293,31 @@ export default function ProjectDocuments() {
                                 document?.version === selectedVersion);
 
                             return (
-                              <Button
-                                key={documentKey}
-                                size="small"
-                                variant={isSelected ? "contained" : "outlined"}
-                                onClick={() =>
-                                  setSelectedVersion(
-                                    document?._id || document?.version || "",
-                                  )
-                                }
-                                sx={{
-                                  minWidth: 72,
-                                  fontWeight: 750,
-                                  borderRadius: 2,
-                                }}
-                              >
-                                v{document?.version || "1.0"}
-                              </Button>
+                              <Stack key={documentKey} direction="row" spacing={0.5} alignItems="center">
+                                <Button
+                                  size="small"
+                                  variant={isSelected ? "contained" : "outlined"}
+                                  onClick={() => setSelectedVersion(document?._id || document?.version || "")}
+                                  sx={{ minWidth: 72, fontWeight: 750, borderRadius: 2 }}
+                                >
+                                  v{document?.version || "1.0"}
+                                </Button>
+                                {document?._id && (
+                                  <Button
+                                    size="small"
+                                    color="error"
+                                    onClick={() => deleteFrd(document._id)}
+                                    sx={{
+                                      minWidth: "auto",
+                                      px: 0.5,
+                                      fontSize: 11,
+                                      fontWeight: 700,
+                                    }}
+                                  >
+                                    Delete
+                                  </Button>
+                                )}
+                              </Stack>
                             );
                           })}
                         </Stack>
@@ -1367,10 +1385,7 @@ export default function ProjectDocuments() {
                             </Stack>
 
                             <Button
-                              component="a"
-                              href={selectedFrd.content}
-                              target="_blank"
-                              rel="noreferrer"
+                              onClick={downloadFrd}
                               variant="contained"
                               startIcon={<DescriptionRoundedIcon />}
                               disabled={!selectedFrd.content}
@@ -1381,7 +1396,7 @@ export default function ProjectDocuments() {
                                 px: 2,
                               }}
                             >
-                              Open FRD Document
+                              Download FRD Document
                             </Button>
                           </Stack>
                         </Box>
@@ -1413,13 +1428,9 @@ export default function ProjectDocuments() {
                     )}
                   </CardContent>
                 </Card>
-
-                {/* ========================================================== */}
-                {/* PROJECT SCOPE                                               */}
-                {/* ========================================================== */}
-
                 <Card
                   sx={{
+                    order: 2,
                     border: "1px solid #e5eaf0",
                     boxShadow: "0 8px 30px rgba(25, 50, 75, 0.04)",
                   }}

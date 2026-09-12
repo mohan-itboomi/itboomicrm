@@ -325,7 +325,7 @@ export default function ProjectWorkspace() {
                   </Box>
                   <Chip
                     size="small"
-                    label={`${phase.completionPercentage || 0}% · ${phase.status}`}
+                    label={`${Math.round(Number(phase.completionPercentage) || 0)}% · ${phase.status}`}
                     color={
                       phase.status === "Completed"
                         ? "success"

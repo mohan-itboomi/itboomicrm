@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
 import {
   Alert,
   Box,
@@ -17,6 +18,7 @@ import { ApiService } from "../../Api/ApiService";
 import CustomPageHeader from "../../Component/CustomPageHeader";
 import ReusableInput from "../../Component/ReusableInput";
 import CustomDatePicker from "../../Component/CustomDatePicker";
+import { openModal } from "../../Api/Redux/Reducers/modalSlice";
 const emptyForm = {
   projectCode: "",
   name: "",
@@ -64,7 +66,14 @@ const getProgress = (project) => {
 const getLatestFrd = (project) =>
   Array.isArray(project?.frd) ? project.frd.at(-1) || {} : project?.frd || {};
 
+const getFrdVersions = (project) => {
+  if (Array.isArray(project?.frd)) return project.frd;
+  if (project?.frd?.content) return [project.frd];
+  return [];
+};
+
 export default function BusinessDevelopment() {
+  const dispatch = useDispatch();
   const [projects, setProjects] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [selected, setSelected] = useState(null);
@@ -83,8 +92,14 @@ export default function BusinessDevelopment() {
     description: "",
     endDate: "",
   });
+  const [editingPhaseId, setEditingPhaseId] = useState("");
+  const [expandedPhaseId, setExpandedPhaseId] = useState("");
   const [phaseStatus, setPhaseStatus] = useState({});
   const [message, setMessage] = useState(null);
+  const currentRole = String(
+    JSON.parse(localStorage.getItem("adminUser") || "{}").role || "",
+  ).toLowerCase();
+  const canDeleteFrd = ["admin", "bd", "team-lead"].includes(currentRole);
 
   const load = () =>
     ApiService.getProjects().then((response) =>
@@ -122,6 +137,15 @@ export default function BusinessDevelopment() {
       });
     }
   };
+
+  const openProjectForm = () =>
+    dispatch(
+      openModal({
+        title: "Create Project",
+        component: "PROJECTS_FORM",
+        props: { record: null, onSaved: load },
+      }),
+    );
 
   const handleDateChange = (field, value) => {
     const next = { ...form, [field]: value };
@@ -187,10 +211,60 @@ export default function BusinessDevelopment() {
   };
   const addPhase = async (event) => {
     event.preventDefault();
-    await ApiService.addProjectPhase(selected._id, phase);
-    setPhase({ name: "", description: "", endDate: "" });
-    setMessage({ type: "success", text: "Delivery phase added." });
-    load();
+    try {
+      if (editingPhaseId) {
+        await ApiService.updateProjectPhase(selected._id, editingPhaseId, phase);
+      } else {
+        await ApiService.addProjectPhase(selected._id, phase);
+      }
+      const response = await ApiService.getProjectById(selected._id);
+      const updatedProject = response.data?.data || response.data;
+
+      setSelected(updatedProject);
+      setPhase({ name: "", description: "", endDate: "" });
+      setEditingPhaseId("");
+      setMessage({ type: "success", text: "Delivery phase saved." });
+      load();
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error.response?.data?.message || "Delivery phase could not be added.",
+      });
+    }
+  };
+
+  const deleteFrd = async (frdId = getLatestFrd(selected)._id) => {
+    if (!frdId || !canDeleteFrd || !window.confirm("Delete this FRD version?")) {
+      return;
+    }
+
+    try {
+      await ApiService.deleteProjectFrd(selected._id, frdId);
+      const response = await ApiService.getProjectById(selected._id);
+      setSelected(response.data?.data || response.data);
+      setFrd({ version: "1.0", content: "" });
+      setFrdFile(null);
+      setMessage({ type: "success", text: "FRD deleted." });
+      load();
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error.response?.data?.message || "FRD could not be deleted.",
+      });
+    }
+  };
+
+  const downloadFrd = async (frdDocument) => {
+    if (!frdDocument?.content) return;
+    const response = await ApiService.downloadFile(frdDocument.content);
+    const blobUrl = URL.createObjectURL(response.data);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = `FRD-${selected?.name || "document"}-v${frdDocument.version || "1.0"}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(blobUrl);
   };
   const changePhaseStatus = async (phaseId, status) => {
     await ApiService.updateProjectPhase(selected._id, phaseId, {
@@ -201,6 +275,32 @@ export default function BusinessDevelopment() {
     setMessage({ type: "success", text: "Phase status updated." });
     const response = await ApiService.getProjectById(selected._id);
     setSelected(response.data?.data || selected);
+  };
+
+  const removePhase = async (phaseId) => {
+    if (!window.confirm("Delete this delivery phase?")) return;
+
+    try {
+      await ApiService.deleteProjectPhase(selected._id, phaseId);
+      const response = await ApiService.getProjectById(selected._id);
+      setSelected(response.data?.data || response.data);
+      setMessage({ type: "success", text: "Delivery phase deleted." });
+      load();
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error.response?.data?.message || "Delivery phase could not be deleted.",
+      });
+    }
+  };
+
+  const editPhase = (item) => {
+    setEditingPhaseId(item._id);
+    setPhase({
+      name: item.name || "",
+      description: item.description || "",
+      endDate: item.endDate ? String(item.endDate).slice(0, 10) : "",
+    });
   };
 
   const activeProjects = projects.filter(
@@ -215,10 +315,13 @@ export default function BusinessDevelopment() {
       <CustomPageHeader
         title="Business development"
         subtitle="Turn client requirements into scoped, documented, phase-managed delivery."
+        buttonText="Create project"
+        buttonIcon={<AddRoundedIcon />}
+        onButtonClick={openProjectForm}
       />
       {message && <Alert severity={message.type}>{message.text}</Alert>}
 
-      <Grid container spacing={2} sx={{ width: "100%", m: 0 }}>
+      <Grid container spacing={2} sx={{ width: "100%", maxWidth: "none", m: 0 }}>
         {[
           {
             label: "Total projects",
@@ -263,8 +366,8 @@ export default function BusinessDevelopment() {
         ))}
       </Grid>
 
-      <Grid container spacing={2} sx={{ width: "100%", m: 0 }}>
-        <Grid item xs={12} lg={5}>
+      <Grid container spacing={2} sx={{ width: "100%", maxWidth: "none", m: 0 }}>
+        <Grid item xs={12} lg={5} sx={{ display: "none" }}>
           <Card>
             <CardContent>
               <Stack component="form" onSubmit={createProject} spacing={2}>
@@ -381,13 +484,25 @@ export default function BusinessDevelopment() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} lg={7}>
+        <Grid item xs={12} lg={12} sx={{ width: "100%", maxWidth: "none", flexBasis: "100%" }}>
           <Card>
             <CardContent>
               <Typography variant="h6" fontWeight={800}>
                 Project board
               </Typography>
-              <Stack spacing={1.5} sx={{ mt: 2 }}>
+              <Box
+                sx={{
+                  mt: 2,
+                  display: "grid",
+                  gridTemplateColumns: {
+                    xs: "1fr",
+                    sm: "repeat(2, minmax(0, 1fr))",
+                    md: "repeat(3, minmax(0, 1fr))",
+                    lg: "repeat(5, minmax(0, 1fr))",
+                  },
+                  gap: 1.5,
+                }}
+              >
                 {projects.map((project) => {
                   const progress = getProgress(project);
                   return (
@@ -431,7 +546,7 @@ export default function BusinessDevelopment() {
                         />
                       </Stack>
 
-                      <Grid container spacing={1} sx={{ mt: 1 }}>
+                      <Grid container spacing={1} sx={{ mt: 1, display: "none" }}>
                         <Grid item xs={12} sm={6}>
                           <Typography variant="body2" color="text.secondary">
                             Client: {project.client || "No client"}
@@ -473,15 +588,15 @@ export default function BusinessDevelopment() {
                     </Box>
                   );
                 })}
-              </Stack>
+              </Box>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
       {selected && (
-        <Grid container spacing={2} sx={{ width: "100%", m: 0 }}>
-          <Grid item xs={12} md={7}>
+        <Grid container spacing={2} sx={{ width: "100%", maxWidth: "none", m: 0 }}>
+          <Grid item xs={12} sx={{ width: "100%", maxWidth: "none", flexBasis: "100%" }}>
             <Card>
               <CardContent>
                 <Stack spacing={2}>
@@ -529,6 +644,40 @@ export default function BusinessDevelopment() {
                     Add the detailed document content that explains what must be
                     built and delivered.
                   </Typography>
+                  <Stack spacing={1}>
+                    {getFrdVersions(selected).map((document, index) => (
+                      <Stack
+                        key={document._id || document.version || index}
+                        direction="row"
+                        alignItems="center"
+                        justifyContent="space-between"
+                        spacing={1}
+                        sx={{ p: 1.25, border: "1px solid #e4e7ec", borderRadius: 2 }}
+                      >
+                        <Typography variant="body2" fontWeight={700}>
+                          FRD Version {document.version || "1.0"}
+                        </Typography>
+                        <Box sx={{ display: "flex", gap: 0.5 }}>
+                          <Button
+                            size="small"
+                            onClick={() => downloadFrd(document)}
+                            disabled={!document.content}
+                          >
+                            Download
+                          </Button>
+                          {canDeleteFrd && document._id && (
+                            <Button
+                              size="small"
+                              color="error"
+                              onClick={() => deleteFrd(document._id)}
+                            >
+                              Delete
+                            </Button>
+                          )}
+                        </Box>
+                      </Stack>
+                    ))}
+                  </Stack>
                   <TextField
                     label="FRD version"
                     value={frd.version}
@@ -562,24 +711,74 @@ export default function BusinessDevelopment() {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} md={5}>
+          <Grid item xs={12} sx={{ width: "100%", maxWidth: "none", flexBasis: "100%" }}>
             <Card>
               <CardContent>
                 <Stack component="form" onSubmit={addPhase} spacing={2}>
                   <Typography variant="h6" fontWeight={800}>
-                    Delivery phases
+                    {editingPhaseId ? "Edit delivery phase" : "Delivery phases"}
                   </Typography>
                   {(selected.phases || []).map((item) => (
                     <Stack
                       key={item._id}
                       direction="row"
                       justifyContent="space-between"
+                      alignItems="center"
+                      spacing={1}
+                      onClick={() => setExpandedPhaseId(
+                        expandedPhaseId === item._id ? "" : item._id,
+                      )}
+                      sx={{
+                        p: 1,
+                        borderRadius: 1.5,
+                        cursor: "pointer",
+                        backgroundColor:
+                          expandedPhaseId === item._id ? "#f4f9fb" : "transparent",
+                      }}
                     >
-                      <Typography>{item.name}</Typography>
-                      <Chip
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography fontWeight={750}>{item.name}</Typography>
+                        {expandedPhaseId === item._id && (
+                          <Box sx={{ mt: 1.25 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              Target date: {item.endDate ? new Date(item.endDate).toLocaleDateString() : "Not set"}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Status: {item.status || "Not Started"} · Completion: {item.completionPercentage || 0}%
+                            </Typography>
+                            {item.description && (
+                              <Box component="ul" sx={{ mt: 1, mb: 0, pl: 2.5 }}>
+                                {String(item.description).split(/\\n|\n/).filter(Boolean).map((point, index) => (
+                                  <Typography component="li" variant="body2" key={index}>
+                                    {point.replace(/^[-•*]\s*/, "")}
+                                  </Typography>
+                                ))}
+                              </Box>
+                            )}
+                          </Box>
+                        )}
+                      </Box>
+                      <Box sx={{ display: "flex", flexShrink: 0 }}>
+                        <Button
+                          size="small"
+                          onClick={(event) => { event.stopPropagation(); editPhase(item); }}
+                          sx={{ minWidth: "auto", px: 1, fontSize: 12 }}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          size="small"
+                          color="error"
+                          onClick={(event) => { event.stopPropagation(); removePhase(item._id); }}
+                          sx={{ minWidth: "auto", px: 1, fontSize: 12 }}
+                        >
+                          Delete
+                        </Button>
+                      </Box>
+                      {/* <Chip
                         size="small"
-                        label={`${item.completionPercentage || 0}% Ã‚Â· ${item.status}`}
-                      />
+                        label={`${item.completionPercentage || 0}% ${item.status}`}
+                      /> */}
                     </Stack>
                   ))}
                   <Divider />
@@ -593,23 +792,44 @@ export default function BusinessDevelopment() {
                   />
                   <TextField
                     label="Phase description"
+                    multiline
+                    minRows={4}
+                    helperText="Add one phase-scope point per line"
                     value={phase.description}
                     onChange={(event) =>
                       setPhase({ ...phase, description: event.target.value })
                     }
                   />
-                  <TextField
-                    type="date"
-                    label="Target date"
-                    InputLabelProps={{ shrink: true }}
-                    value={phase.endDate}
-                    onChange={(event) =>
-                      setPhase({ ...phase, endDate: event.target.value })
-                    }
-                  />
+                  <Box>
+                    <Typography
+                      variant="caption"
+                      sx={{ display: "block", mb: 0.6, color: "#667085", fontWeight: 600 }}
+                    >
+                      Target date
+                    </Typography>
+                    <TextField
+                      type="date"
+                      value={phase.endDate}
+                      onChange={(event) =>
+                        setPhase({ ...phase, endDate: event.target.value })
+                      }
+                      fullWidth
+                    />
+                  </Box>
                   <Button type="submit" variant="outlined">
-                    Add phase
+                    {editingPhaseId ? "Update phase" : "Add phase"}
                   </Button>
+                  {editingPhaseId && (
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        setEditingPhaseId("");
+                        setPhase({ name: "", description: "", endDate: "" });
+                      }}
+                    >
+                      Cancel edit
+                    </Button>
+                  )}
                 </Stack>
               </CardContent>
             </Card>

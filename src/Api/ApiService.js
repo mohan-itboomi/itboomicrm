@@ -41,6 +41,8 @@ export const uploadMedia = (file, onUploadProgress) => {
     onUploadProgress,
   });
 };
+export const downloadFile = (url) =>
+  api.get(url, { responseType: "blob" });
 
 // Employees
 export const getEmployees = (params = {}) => list("/employees", params);
@@ -82,10 +84,14 @@ export const updateProjectScope = (id, scope) =>
   api.patch(`/projects/${id}/scope`, scope);
 export const updateProjectFrd = (id, frd) =>
   api.patch(`/projects/${id}/frd`, frd);
+export const deleteProjectFrd = (id, frdId) =>
+  api.delete(`/projects/${id}/frd/${frdId}`);
 export const addProjectPhase = (id, phase) =>
   api.post(`/projects/${id}/phases`, phase);
 export const updateProjectPhase = (id, phaseId, phase) =>
   api.patch(`/projects/${id}/phases/${phaseId}`, phase);
+export const deleteProjectPhase = (id, phaseId) =>
+  api.delete(`/projects/${id}/phases/${phaseId}`);
 export const getRoles = () => api.get("/access/roles");
 export const getPermissions = () => api.get("/access/permissions");
 export const updateRolePermissions = (id, permissions) =>
@@ -206,6 +212,7 @@ export const ApiService = {
   getProjects,
   getProjectById,
   uploadMedia,
+  downloadFile,
   createProject,
   updateProject,
   deleteProject,
@@ -213,8 +220,10 @@ export const ApiService = {
   removeProjectMember,
   updateProjectScope,
   updateProjectFrd,
+  deleteProjectFrd,
   addProjectPhase,
   updateProjectPhase,
+  deleteProjectPhase,
   getRoles,
   getPermissions,
   updateRolePermissions,

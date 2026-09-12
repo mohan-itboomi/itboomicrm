@@ -33,7 +33,7 @@ const CustomPageHeader = ({
             color: "#1f2d3d",
             lineHeight: 1.1,
             letterSpacing: "-0.06em",
-            fontSize: { xs: "2.1rem", sm: "2.8rem" },
+            fontSize: "20px",
           }}
         >
           {title}
@@ -42,7 +42,7 @@ const CustomPageHeader = ({
           <Typography
             sx={{
               color: "#5f6b7a",
-              fontSize: "1.05rem",
+              fontSize: "0.9rem",
               mt: 0.8,
               lineHeight: 1.5,
             }}
