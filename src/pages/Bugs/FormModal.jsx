@@ -47,7 +47,7 @@ export default function BugsFormModal({ resource, record, onSaved }) {
         const projectData = projectResponse.data?.data || projectResponse.data || [];
         const employeeData = employeeResponse.data?.data || employeeResponse.data || [];
         setProjects((projectData.items || projectData).map((item) => ({ value: item._id, label: item.name })));
-        setEmployees((Array.isArray(employeeData) ? employeeData : []).filter((item) => ["web-developer", "mobile-developer"].includes(String(item.role || "").toLowerCase())).map((item) => ({
+        setEmployees((Array.isArray(employeeData) ? employeeData : []).filter((item) => ["web-developer", "mobile-developer", "designer"].includes(String(item.role || "").toLowerCase())).map((item) => ({
           value: item.value || item._id,
           label: item.label || item.name || item.email || "Unnamed employee",
         })));

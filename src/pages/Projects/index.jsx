@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Box, IconButton, Stack, TextField, Typography } from "@mui/material";
+import { Box, IconButton, Stack, TextField } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -12,7 +12,7 @@ import { ApiService } from "../../Api/ApiService";
 import CustomPageHeader from "../../Component/CustomPageHeader";
 import CustomTable from "../../Component/CustomTable";
 import StatusChip from "../../Component/StatusChip";
-import ReusableButton from "../../Component/ReusableButton";
+// import ReusableButton from "../../Component/ReusableButton";
 
 const fields = ["projectCode", "name", "client", "status", "priority"];
 const valueOf = (value) =>
@@ -32,7 +32,7 @@ export default function Projects() {
   const canManageProjects = ["admin", "bd", "project-coordinator"].includes(
     currentRole,
   );
-  const canDeleteProjects = currentRole === "admin";
+  // const canDeleteProjects = currentRole === "admin";
   const load = () =>
     ApiService.getProjects({ search }).then((response) =>
       setRows((response.data?.data || response.data).items || []),
@@ -53,9 +53,9 @@ export default function Projects() {
       <CustomPageHeader
         title="Projects"
         subtitle="Open an assigned project workspace to review modules, tasks, and delivery time."
-        buttonText={canManageProjects ? "Create project" : undefined}
+        // buttonText={canManageProjects ? "Create project" : undefined}
         buttonIcon={<AddIcon />}
-        onButtonClick={canManageProjects ? () => modal() : undefined}
+        // onButtonClick={canManageProjects ? () => modal() : undefined}
       />
       <TextField
         size="small"

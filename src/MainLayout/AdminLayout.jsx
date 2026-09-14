@@ -31,20 +31,20 @@ import { ApiService } from "../Api/ApiService";
 import { clearAuthSession } from "../Api/authSession";
 
 const allLinks = [
-  ["Dashboard", "/dashboard", DashboardIcon, ["admin", "employee", "web-developer", "mobile-developer", "team-lead", "tester", "bd"]],
+  ["Dashboard", "/dashboard", DashboardIcon, ["admin", "employee", "web-developer", "mobile-developer", "designer", "team-lead", "tester", "bd"]],
   ["Employees", "/employees", PeopleIcon, ["admin"]],
   ["Teams", "/teams", GroupsIcon, ["admin", "team-lead"]],
   ["Projects", "/projects", FolderIcon, ["admin", "team-lead", "bd", "project-coordinator"]],
-  ["FRD & Scope", "/frd", DescriptionRoundedIcon, ["admin", "employee", "web-developer", "mobile-developer", "team-lead", "tester", "bd", "project-coordinator"]],
-  ["Tasks", "/tasks", AssignmentIcon, ["admin", "team-lead", "project-coordinator", "employee", "web-developer", "mobile-developer", "tester"]],
-  ["Bugs", "/bugs", BugReportIcon, ["admin", "tester", "web-developer", "mobile-developer"]],
+  ["FRD & Scope", "/frd", DescriptionRoundedIcon, ["admin", "employee", "web-developer", "mobile-developer", "designer", "team-lead", "tester", "bd", "project-coordinator"]],
+  ["Tasks", "/tasks", AssignmentIcon, ["admin", "team-lead", "project-coordinator", "employee", "web-developer", "mobile-developer", "designer", "tester"]],
+  ["Bugs", "/bugs", BugReportIcon, ["admin", "tester", "web-developer", "mobile-developer", "designer"]],
   ["Comments", "/comments", CommentIcon, ["admin", "team-lead", "project-coordinator", "employee", "tester"]],
-  ["EOD Reports", "/eod-reports", EventNoteIcon, ["admin", "team-lead", "project-coordinator", "employee", "web-developer", "mobile-developer", "tester"]],
+  ["EOD Reports", "/eod-reports", EventNoteIcon, ["admin", "team-lead", "project-coordinator", "employee", "web-developer", "mobile-developer", "designer", "tester"]],
   ["Audit Logs", "/audit-logs", HistoryIcon, ["admin"]],
-  ["Time tracker", "/timer", TimerRoundedIcon, ["admin", "employee", "web-developer", "mobile-developer", "team-lead", "tester", "project-coordinator"]],
-  ["Reports", "/reports", AssessmentRoundedIcon, ["admin", "team-lead", "project-coordinator", "employee", "web-developer", "mobile-developer", "tester"]],
-  ["Calendar", "/calendar", CalendarMonthRoundedIcon, ["admin", "employee", "web-developer", "mobile-developer", "team-lead", "tester"]],
-  ["Settings", "/settings", SettingsRoundedIcon, ["admin", "employee", "web-developer", "mobile-developer", "team-lead", "tester", "project-coordinator"]],
+  ["Time tracker", "/timer", TimerRoundedIcon, ["admin", "employee", "web-developer", "mobile-developer", "designer", "team-lead", "tester", "project-coordinator"]],
+  ["Reports", "/reports", AssessmentRoundedIcon, ["admin", "team-lead", "project-coordinator", "employee", "web-developer", "mobile-developer", "designer", "tester"]],
+  ["Calendar", "/calendar", CalendarMonthRoundedIcon, ["admin", "employee", "web-developer", "mobile-developer", "designer", "team-lead", "tester"]],
+  ["Settings", "/settings", SettingsRoundedIcon, ["admin", "employee", "web-developer", "mobile-developer", "designer", "team-lead", "tester", "project-coordinator"]],
   ["Business development", "/business-development", HandshakeRoundedIcon, ["admin", "bd"]],
 ];
 
