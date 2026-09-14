@@ -13,19 +13,28 @@ import {
   Tabs,
   TextField as MuiTextField,
   Typography,
+  Divider,
+  IconButton,
 } from "@mui/material";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import PersonAddRoundedIcon from "@mui/icons-material/PersonAddRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import { useParams } from "react-router-dom";
 import { ApiService } from "../../Api/ApiService";
 import CustomPageHeader from "../../Component/CustomPageHeader";
 import CustomDropdown from "../../Component/CustomDropdown";
 
 const categories = ["Project Implementation", "Bug Fixing"];
-const initialModule = { name: "", description: "", status: "Planned", phaseId: "" };
+const initialModule = {
+  name: "",
+  description: "",
+  status: "Planned",
+  phaseId: "",
+};
 const initialTask = {
   title: "",
   description: "",
@@ -95,7 +104,7 @@ function TaskTiming({ row }) {
   return (
     <Stack spacing={0.75} sx={{ mt: 1.5 }}>
       <Typography variant="body2" color="text.secondary">
-        Total time: {formatMinutes(row.totalMinutes)}  Pause time:{" "}
+        Total time: {formatMinutes(row.totalMinutes)} Pause time:{" "}
         {formatMinutes(pauseMinutes)}
       </Typography>
       {row.sessions.map(({ session, pauses }) => (
@@ -104,9 +113,10 @@ function TaskTiming({ row }) {
           sx={{ pl: 1.5, borderLeft: "2px solid #dbe4ef" }}
         >
           <Typography variant="caption" color="text.secondary">
-            Start: {formatDateTime(session.startTime || session.startedAt)} 
-            End: {formatDateTime(session.endTime || session.endedAt)}  Status:{" "}
-            {session.status}
+            Start: {formatDateTime(session.startTime || session.startedAt)}
+            End: {formatDateTime(
+              session.endTime || session.endedAt,
+            )} Status: {session.status}
           </Typography>
           {pauses.map((pause) => (
             <Typography
@@ -126,7 +136,7 @@ function TaskTiming({ row }) {
   );
 }
 
-function TaskSection({ title, tasks, color }) {
+function TaskSection({ title, tasks, color, onDelete, onEdit }) {
   return (
     <Stack spacing={1.5}>
       <Typography variant="h6" fontWeight={800}>
@@ -143,7 +153,7 @@ function TaskSection({ title, tasks, color }) {
               <Box>
                 <Typography fontWeight={750}>{row.task.title}</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {row.task.moduleId?.name || "No module"} {" "}
+                  {row.task.moduleId?.name || "No module"}{" "}
                   {row.task.assignedTo?.name || "Unassigned"}
                 </Typography>
                 {row.task.parentTaskId?.title && (
@@ -155,6 +165,12 @@ function TaskSection({ title, tasks, color }) {
               <Stack direction="row" spacing={1}>
                 <Chip size="small" color={color} label={row.task.status} />
                 <Chip size="small" label={formatMinutes(row.totalMinutes)} />
+                <IconButton size="small" title="Edit task" onClick={() => onEdit(row.task)}>
+                  <EditRoundedIcon fontSize="small" />
+                </IconButton>
+                <IconButton size="small" color="error" title="Delete task" onClick={() => onDelete(row.task)}>
+                  <DeleteOutlineRoundedIcon fontSize="small" />
+                </IconButton>
               </Stack>
             </Stack>
             <TaskTiming row={row} />
@@ -182,6 +198,8 @@ export default function ProjectWorkspace() {
   });
   const [moduleForm, setModuleForm] = useState(initialModule);
   const [taskForm, setTaskForm] = useState(initialTask);
+  const [editingModuleId, setEditingModuleId] = useState("");
+  const [editingTaskId, setEditingTaskId] = useState("");
   const [memberId, setMemberId] = useState("");
   const [tab, setTab] = useState(0);
   const [message, setMessage] = useState(null);
@@ -236,28 +254,64 @@ export default function ProjectWorkspace() {
   const createModule = async (event) => {
     event.preventDefault();
     const { phaseId, ...modulePayload } = moduleForm;
-    await ApiService.createProjectModule(id, {
+    const payload = {
       ...modulePayload,
       ...(phaseId ? { phaseId } : {}),
-    });
+    };
+    if (editingModuleId) {
+      await ApiService.updateProjectModule(id, editingModuleId, payload);
+    } else {
+      await ApiService.createProjectModule(id, payload);
+    }
     setModuleForm(initialModule);
+    setEditingModuleId("");
     await load();
-    setMessage({ type: "success", text: "Module created under this project." });
+    setMessage({ type: "success", text: editingModuleId ? "Module updated." : "Module created under this project." });
   };
   const createTask = async (event) => {
     event.preventDefault();
     const { moduleId, parentTaskId, assignedTo, ...taskPayload } = taskForm;
-    await ApiService.createTask({
+    const payload = {
       ...taskPayload,
       projectId: id,
       ...(moduleId ? { moduleId } : {}),
       ...(parentTaskId ? { parentTaskId } : {}),
       ...(assignedTo ? { assignedTo } : {}),
       estimatedMinutes: Number(taskForm.estimatedMinutes) || 0,
-    });
+    };
+    if (editingTaskId) {
+      await ApiService.updateProjectTask(id, editingTaskId, payload);
+    } else {
+      await ApiService.createTask(payload);
+    }
     setTaskForm(initialTask);
+    setEditingTaskId("");
     await load();
-    setMessage({ type: "success", text: "Task created under this project." });
+    setMessage({ type: "success", text: editingTaskId ? "Task updated." : "Task created under this project." });
+  };
+  const editModule = (module) => {
+    setEditingModuleId(module._id);
+    setModuleForm({
+      name: module.name || "",
+      description: module.description || "",
+      phaseId: module.phaseId?._id || module.phaseId || "",
+    });
+  };
+  const editTask = (task) => {
+    setEditingTaskId(task._id);
+    setTaskForm({ ...initialTask, ...task, moduleId: task.moduleId?._id || task.moduleId || "", parentTaskId: task.parentTaskId?._id || task.parentTaskId || "", assignedTo: task.assignedTo?._id || task.assignedTo || "" });
+  };
+  const deleteModule = async (module) => {
+    if (!window.confirm(`Delete module "${module.name}"?`)) return;
+    await ApiService.deleteProjectModule(id, module._id);
+    await load();
+    setMessage({ type: "success", text: "Module deleted." });
+  };
+  const deleteTask = async (task) => {
+    if (!window.confirm(`Delete task "${task.title}"?`)) return;
+    await ApiService.deleteProjectTask(id, task._id);
+    await load();
+    setMessage({ type: "success", text: "Task deleted." });
   };
 
   if (!project) return <Typography>Loading project workspace...</Typography>;
@@ -428,12 +482,12 @@ export default function ProjectWorkspace() {
       </Tabs>
       {tab === 0 && (
         <Grid container spacing={2}>
-          <Grid item xs={12} md={4}>
-            <Card>
+          <Grid item xs={12} md={12} lg={12}>
+            <Card sx={{ width: 500 }}>
               <CardContent>
                 <Stack component="form" onSubmit={createModule} spacing={2}>
                   <Typography variant="h6" fontWeight={800}>
-                    Create module
+                    {editingModuleId ? "Update module" : "Create module"}
                   </Typography>
                   <TextField
                     required
@@ -479,35 +533,109 @@ export default function ProjectWorkspace() {
             </Card>
           </Grid>
           <Grid item xs={12} md={8}>
-            <Stack spacing={1.5}>
-              {modules.map((module) => (
-                <Card key={module._id}>
-                  <CardContent>
-                    <Stack direction="row" justifyContent="space-between">
-                      <Typography fontWeight={750}>{module.name}</Typography>
-                      <Stack direction="row" spacing={1}>
-                        <Chip
-                          size="small"
-                          variant="outlined"
-                          label={
-                            (project.phases || []).find(
-                              (phase) =>
-                                String(phase._id) === String(module.phaseId),
-                            )?.name || "Unassigned phase"
-                          }
-                        />
-                        <Chip
-                          size="small"
-                          label={`${module.completionPercentage || 0}% · ${module.status}`}
-                        />
+            <Stack spacing={3}>
+              {modules.map((module) => {
+                const phaseName =
+                  (project.phases || []).find(
+                    (phase) => String(phase._id) === String(module.phaseId),
+                  )?.name || "Unassigned Phase";
+                return (
+                  <Card
+                    key={module._id}
+                    sx={{
+                      borderRadius: 2.5,
+                      border: "1px solid",
+                      borderColor: "divider",
+                      boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
+                      transition: "all 0.2s ease",
+                      "&:hover": {
+                        transform: "translateY(-2px)",
+                        boxShadow: "0 6px 20px rgba(0,0,0,0.09)",
+                        borderColor: "primary.main",
+                      },
+                    }}
+                  >
+                    <CardContent sx={{ p: 2.5 }}>
+                      {/* Header */}
+                      <Stack
+                        direction={{ xs: "column", sm: "row" }}
+                        justifyContent="space-between"
+                        alignItems={{ xs: "flex-start", sm: "center" }}
+                        gap={1.5}
+                      >
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography
+                            variant="subtitle1"
+                            fontWeight={700}
+                            sx={{
+                              color: "text.primary",
+                              mb: 0.5,
+                            }}
+                          >
+                            {module.name}
+                          </Typography>
+
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{
+                              lineHeight: 1.6,
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                            }}
+                          >
+                            {module.description || "No description available"}
+                          </Typography>
+                        </Box>
+
+                        {/* Badges */}
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          flexWrap="wrap"
+                          useFlexGap
+                          sx={{ flexShrink: 0 }}
+                        >
+                          <Chip
+                            size="small"
+                            label={phaseName}
+                            variant="outlined"
+                            sx={{
+                              fontWeight: 600,
+                              borderRadius: 1.5,
+                            }}
+                          />
+
+                          <Chip
+                            size="small"
+                            label={module.status || "Pending"}
+                            sx={{
+                              fontWeight: 600,
+                              borderRadius: 1.5,
+                            }}
+                            color={
+                              module.status === "Completed"
+                                ? "success"
+                                : module.status === "In Progress"
+                                  ? "primary"
+                                  : "default"
+                            }
+                          />
+                          <IconButton size="small" title="Edit module" onClick={() => editModule(module)}>
+                            <EditRoundedIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton size="small" color="error" title="Delete module" onClick={() => deleteModule(module)}>
+                            <DeleteOutlineRoundedIcon fontSize="small" />
+                          </IconButton>
+                        </Stack>
                       </Stack>
-                    </Stack>
-                    <Typography color="text.secondary" variant="body2">
-                      {module.description || "No description"}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              ))}
+                      {/* Progress Bar */}
+                    </CardContent>
+                  </Card>
+                );
+              })}
               {!modules.length && (
                 <Typography color="text.secondary">
                   No modules created for this project.
@@ -524,7 +652,7 @@ export default function ProjectWorkspace() {
               <CardContent>
                 <Stack component="form" onSubmit={createTask} spacing={2}>
                   <Typography variant="h6" fontWeight={800}>
-                    Create task
+                    {editingTaskId ? "Update task" : "Create task"}
                   </Typography>
                   <TextField
                     required
@@ -621,11 +749,15 @@ export default function ProjectWorkspace() {
                 title="Project Implementation"
                 tasks={implementationTasks}
                 color="primary"
+                onDelete={deleteTask}
+                onEdit={editTask}
               />
               <TaskSection
                 title="Bug Fixing"
                 tasks={bugFixingTasks}
                 color="error"
+                onDelete={deleteTask}
+                onEdit={editTask}
               />
             </Stack>
           </Grid>

@@ -107,6 +107,10 @@ export const getProjectModules = (projectId, params = {}) =>
   list(`/projects/${projectId}/modules`, params);
 export const createProjectModule = (projectId, payload) =>
   api.post(`/projects/${projectId}/modules`, payload);
+export const updateProjectModule = (projectId, moduleId, payload) =>
+  api.put(`/projects/${projectId}/modules/${moduleId}`, payload);
+export const deleteProjectModule = (projectId, moduleId) =>
+  api.delete(`/projects/${projectId}/modules/${moduleId}`);
 
 // Tasks
 export const getTasks = (params = {}) => list("/tasks", params);
@@ -114,6 +118,10 @@ export const getTaskById = (id) => get("/tasks", id);
 export const createTask = (payload) => create("/tasks", payload);
 export const updateTask = (id, payload) => update("/tasks", id, payload);
 export const deleteTask = (id) => remove("/tasks", id);
+export const updateProjectTask = (projectId, taskId, payload) =>
+  api.put(`/projects/${projectId}/tasks/${taskId}`, payload);
+export const deleteProjectTask = (projectId, taskId) =>
+  api.delete(`/projects/${projectId}/tasks/${taskId}`);
 export const assignTask = (id, assignedTo) =>
   api.patch(`/tasks/${id}/assign`, { assignedTo });
 export const updateTaskStatus = (id, status) =>
@@ -234,11 +242,15 @@ export const ApiService = {
   deleteModule,
   getProjectModules,
   createProjectModule,
+  updateProjectModule,
+  deleteProjectModule,
   getTasks,
   getTaskById,
   createTask,
   updateTask,
   deleteTask,
+  updateProjectTask,
+  deleteProjectTask,
   assignTask,
   updateTaskStatus,
   updateTaskProgress,
