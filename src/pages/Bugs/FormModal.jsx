@@ -17,6 +17,8 @@ const initialValues = {
   bugCode: "",
   projectId: "",
   taskId: "",
+  taskTitle: "",
+  moduleId: "",
   title: "",
   description: "",
   severity: "Medium",
@@ -38,6 +40,7 @@ export default function BugsFormModal({ resource, record, onSaved }) {
   }));
   const [projects, setProjects] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [modules, setModules] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [saving, setSaving] = useState(false);
 
@@ -71,6 +74,12 @@ export default function BugsFormModal({ resource, record, onSaved }) {
       })
       .catch(() => setTasks([]));
   }, [values.projectId]);
+  useEffect(() => {
+    if (!values.projectId) { setModules([]); return; }
+    ApiService.getProjectModules(values.projectId)
+      .then(response => { const data = response.data?.data || response.data || []; setModules((data.items || data).map(item => ({ value: item._id, label: item.name }))); })
+      .catch(() => setModules([]));
+  }, [values.projectId]);
 
   const updateValue = (field, value) => {
     setValues((current) => ({ ...current, [field]: value }));
@@ -85,6 +94,8 @@ export default function BugsFormModal({ resource, record, onSaved }) {
         ...values,
         bugCode: values.bugCode || undefined,
         taskId: values.taskId || undefined,
+        taskTitle: values.taskTitle || undefined,
+        moduleId: values.moduleId || undefined,
         assignedTo: values.assignedTo || undefined,
         attachments: values.attachments.filter(Boolean),
       };
@@ -136,7 +147,9 @@ export default function BugsFormModal({ resource, record, onSaved }) {
 
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
           <CustomDropdown label="Project" name="projectId" value={values.projectId} options={projects} onChange={(value) => { updateValue("projectId", value); updateValue("taskId", ""); }} placeholder="Select project" required />
-          <CustomDropdown label="Task" name="taskId" value={values.taskId} options={tasks} onChange={(value) => updateValue("taskId", value)} placeholder="Select related task" />
+          <ReusableInput label="New task name (optional)" name="taskTitle" value={values.taskTitle} onChange={(event) => updateValue("taskTitle", event.target.value)} placeholder="Enter task name for developer" />
+          <CustomDropdown label="Module" name="moduleId" value={values.moduleId} options={modules} onChange={(value) => updateValue("moduleId", value)} placeholder="Choose module" />
+          <CustomDropdown label="Related existing task (optional)" name="taskId" value={values.taskId} options={tasks} onChange={(value) => updateValue("taskId", value)} placeholder="Select related task" />
         </Stack>
 
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
