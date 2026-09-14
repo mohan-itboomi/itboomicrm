@@ -137,13 +137,26 @@ function TaskTiming({ row }) {
 }
 
 function TaskSection({ title, tasks, color, onDelete, onEdit }) {
+  const isBugFixing = color === "error";
   return (
     <Stack spacing={1.5}>
-      <Typography variant="h6" fontWeight={800}>
+      <Typography
+        variant="h6"
+        fontWeight={800}
+        color={isBugFixing ? "error.main" : "primary.main"}
+      >
         {title} ({tasks.length})
       </Typography>
       {tasks.map((row) => (
-        <Card key={row.task._id} variant="outlined">
+        <Card
+          key={row.task._id}
+          variant="outlined"
+          sx={{
+            borderColor: isBugFixing ? "error.light" : "primary.light",
+            borderLeft: 5,
+            bgcolor: isBugFixing ? "#fff5f5" : "background.paper",
+          }}
+        >
           <CardContent>
             <Stack
               direction={{ xs: "column", sm: "row" }}
@@ -173,7 +186,13 @@ function TaskSection({ title, tasks, color, onDelete, onEdit }) {
                 </IconButton>
               </Stack>
             </Stack>
-            <TaskTiming row={row} />
+            <Box sx={{
+              "& .MuiBox-root": {
+                borderLeftColor: isBugFixing ? "error.light" : "#dbe4ef",
+              },
+            }}>
+              <TaskTiming row={row} />
+            </Box>
           </CardContent>
         </Card>
       ))}

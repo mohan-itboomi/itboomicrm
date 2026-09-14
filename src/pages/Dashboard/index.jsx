@@ -109,17 +109,35 @@ export default function Dashboard() {
     1,
   );
   const sessions = data?.activeWork || [];
-  const activeWork = (data?.employeeDirectory || []).map((employee) => {
-    const session = sessions.find(
+  const taskBreakdown = (data?.taskBreakdown || []).reduce((result, item) => {
+    const category = item._id?.category;
+    const status = item._id?.status;
+    if (category === "Project Implementation") result.implementation += item.count;
+    if (status === "Testing") result.testing += item.count;
+    if (category === "Bug Fixing" && ["Completed", "Testing"].includes(status)) result.bugFixed += item.count;
+    return result;
+  }, { implementation: 0, testing: 0, bugFixed: 0 });
+  const chartTotal = Object.values(taskBreakdown).reduce((sum, value) => sum + value, 0) || 1;
+  const chartGradient = `conic-gradient(#1976d2 0 ${(taskBreakdown.implementation / chartTotal) * 360}deg, #ed6c02 ${(taskBreakdown.implementation / chartTotal) * 360}deg ${((taskBreakdown.implementation + taskBreakdown.testing) / chartTotal) * 360}deg, #d32f2f ${((taskBreakdown.implementation + taskBreakdown.testing) / chartTotal) * 360}deg 360deg)`;
+  const activeWork = (data?.employeeDirectory || []).flatMap((employee) => {
+    const employeeSessions = sessions.filter(
       (item) => String(item.employeeId) === String(employee._id),
     );
-    return {
+    if (!employeeSessions.length) {
+      return [{
+        ...employee,
+        _id: employee._id,
+        employeeName: employee.name || employee.email,
+        workStatus: "Unassigned",
+      }];
+    }
+    return employeeSessions.map((session) => ({
       ...employee,
-      ...(session || {}),
-      _id: employee._id,
+      ...session,
+      _id: `${employee._id}-${session._id}`,
       employeeName: employee.name || employee.email,
-      workStatus: session?.status || "Unassigned",
-    };
+      workStatus: session.status,
+    }));
   });
 
   return (
@@ -292,8 +310,13 @@ export default function Dashboard() {
               {activeWork.map((item) => {
                 const isRunning = item.workStatus === "Running";
                 const isPaused = item.workStatus === "Paused";
-                const cardColor = isRunning ? "#eef6f1" : "#fff8e1";
-                const borderColor = isRunning ? "#d8ebdf" : "#f3df9b";
+                const isBugFixing = item.taskCategory === "Bug Fixing";
+                const cardColor = isBugFixing
+                  ? "#fff1f2"
+                  : isRunning ? "#eef6f1" : "#fff8e1";
+                const borderColor = isBugFixing
+                  ? "#f3b6bd"
+                  : isRunning ? "#d8ebdf" : "#f3df9b";
                 return (
                   <Stack
                     key={item._id}
@@ -308,7 +331,7 @@ export default function Dashboard() {
                     }}
                   >
                     <PlayCircleOutlineRoundedIcon
-                      sx={{ color: isRunning ? "#2e7d32" : "#b7791f" }}
+                      sx={{ color: isBugFixing ? "#d32f2f" : isRunning ? "#2e7d32" : "#b7791f" }}
                     />
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography fontWeight={700} noWrap>
@@ -322,7 +345,7 @@ export default function Dashboard() {
                     <Typography
                       variant="caption"
                       sx={{
-                        color: isRunning ? "#2e7d32" : "#b7791f",
+                        color: isBugFixing ? "#d32f2f" : isRunning ? "#2e7d32" : "#b7791f",
                         fontWeight: 700,
                       }}
                     >
@@ -337,6 +360,30 @@ export default function Dashboard() {
               No active employees found.
             </Typography>
           )}
+        </CardContent>
+      </Card>
+
+      <Card sx={{ border: "1px solid #e0e6ef", borderRadius: 3, boxShadow: "none" }}>
+        <CardContent>
+          <Typography variant="h6" fontWeight={800}>All projects work summary</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Implementation, testing, and fixed bug tasks across all projects.
+          </Typography>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={3} alignItems="center">
+            <Box sx={{ width: 170, height: 170, borderRadius: "50%", background: chartGradient, display: "grid", placeItems: "center" }}>
+              <Box sx={{ width: 92, height: 92, borderRadius: "50%", bgcolor: "background.paper", display: "grid", placeItems: "center" }}>
+                <Typography fontWeight={800}>{chartTotal === 1 && !Object.values(taskBreakdown).some(Boolean) ? 0 : chartTotal}</Typography>
+              </Box>
+            </Box>
+            <Stack spacing={1}>
+              {[['Project Implementation', taskBreakdown.implementation, '#1976d2'], ['Testing', taskBreakdown.testing, '#ed6c02'], ['Bug Fixed', taskBreakdown.bugFixed, '#d32f2f']].map(([label, value, color]) => (
+                <Stack direction="row" spacing={1} alignItems="center" key={label}>
+                  <Box sx={{ width: 12, height: 12, borderRadius: "50%", bgcolor: color }} />
+                  <Typography>{label}: <b>{value}</b></Typography>
+                </Stack>
+              ))}
+            </Stack>
+          </Stack>
         </CardContent>
       </Card>
 

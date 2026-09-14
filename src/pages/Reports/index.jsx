@@ -40,7 +40,19 @@ export default function Reports() {
     const url = URL.createObjectURL(response.data);
     const link = document.createElement("a"); link.href = url; link.download = "timesheet.csv"; link.click(); URL.revokeObjectURL(url);
   };
+  const projectTotals = Object.values(rows.reduce((result, row) => {
+    const key = row.projectId?._id || row.projectId?.name || "unknown";
+    const item = result[key] || { name: row.projectId?.name || "Unknown project", implementation: 0, testing: 0, bugFixing: 0 };
+    const minutes = Number(row.durationMinutes) || 0;
+    if (row.taskId?.category === "Bug Fixing") item.bugFixing += minutes;
+    else if (row.taskId?.status === "Testing") item.testing += minutes;
+    else item.implementation += minutes;
+    result[key] = item;
+    return result;
+  }, {}));
+  projectTotals.forEach(item => { item.total = item.implementation + item.testing + item.bugFixing; });
   return <Stack spacing={3}>
+    <Card><CardContent><Typography variant="h6" fontWeight={850}>Project total work hours</Typography><Typography color="text.secondary" sx={{ mb: 2 }}>Implementation, testing, bug fixing, and total tracked time.</Typography><Box sx={{ overflowX: "auto" }}><Table><TableHead><TableRow><TableCell>Project</TableCell><TableCell>Implementation</TableCell><TableCell>Testing</TableCell><TableCell>Bug Fixing</TableCell><TableCell>Total</TableCell></TableRow></TableHead><TableBody>{projectTotals.length ? projectTotals.map(item => <TableRow key={item.name}><TableCell>{item.name}</TableCell><TableCell>{formatMinutes(item.implementation)}</TableCell><TableCell>{formatMinutes(item.testing)}</TableCell><TableCell sx={{ color: "error.main", fontWeight: 700 }}>{formatMinutes(item.bugFixing)}</TableCell><TableCell><b>{formatMinutes(item.total)}</b></TableCell></TableRow>) : <TableRow><TableCell colSpan={5}>No project time recorded yet.</TableCell></TableRow>}</TableBody></Table></Box></CardContent></Card>
     <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" spacing={2}><Box><Typography variant="h4" fontWeight={850}>Reports</Typography><Typography color="text.secondary" sx={{ mt: .5 }}>Review tracked work across employees and projects.</Typography></Box><Button variant="outlined" startIcon={<DownloadRoundedIcon />} onClick={download}>Export CSV</Button></Stack>
     {error && <Alert severity="warning">{error}</Alert>}
     {canFilterAll && <Card><CardContent><Stack direction={{ xs: "column", sm: "row" }} spacing={2}><CustomDropdown label="Employee" name="employeeId" value={filters.employeeId} options={employees} onChange={value => setFilters(current => ({ ...current, employeeId: value }))} placeholder="All employees" /><CustomDropdown label="Project" name="projectId" value={filters.projectId} options={projects} onChange={value => setFilters(current => ({ ...current, projectId: value }))} placeholder="All projects" /></Stack></CardContent></Card>}
