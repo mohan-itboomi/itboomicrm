@@ -605,14 +605,14 @@ export default function ProjectDocuments() {
                               {project.name || "Unnamed Project"}
                             </Typography>
 
-                            <Typography
+                            {/* <Typography
                               variant="caption"
                               color="text.secondary"
                               display="block"
                               noWrap
                             >
                               {project.projectCode || "No project code"}
-                            </Typography>
+                            </Typography> */}
                           </Box>
                         </Stack>
                       </CardContent>
@@ -1120,7 +1120,7 @@ export default function ProjectDocuments() {
                                   {/* Progress */}
 
                                   <Box>
-                                    {/* <Stack
+                                    <Stack
                                       direction="row"
                                       justifyContent="space-between"
                                       sx={{ mb: 0.7 }}
@@ -1139,7 +1139,7 @@ export default function ProjectDocuments() {
                                       >
                                         {progress}%
                                       </Typography>
-                                    </Stack> */}
+                                    </Stack>
 
                                     <LinearProgress
                                       variant="determinate"

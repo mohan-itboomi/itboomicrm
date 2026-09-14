@@ -70,7 +70,7 @@ export const assignTeamLead = (id, userId) =>
   api.patch(`/teams/${id}/lead`, { userId });
 
 // Projects
-export const getProjectId = () => api.get("/projects/generate-id");
+export const getProjectId = () => api.get("/projects/generate-code");
 export const getProjects = (params = {}) => list("/projects", params);
 export const getProjectById = (id) => get("/projects", id);
 export const createProject = (payload) => create("/projects", payload);
