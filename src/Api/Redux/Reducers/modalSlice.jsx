@@ -23,7 +23,7 @@ const initialState = {
   title: "",
   component: null,
   props: {},
-  maxWidth: "sm",
+  maxWidth: "md",
 };
 const modalSlice = createSlice({
   name: "modal",
@@ -34,7 +34,7 @@ const modalSlice = createSlice({
       state.title = action.payload.title || "";
       state.component = action.payload.component || null;
       state.props = action.payload.props || {};
-      state.maxWidth = action.payload.maxWidth || "sm";
+      state.maxWidth = action.payload.maxWidth || "md";
     },
     closeModal: (state) => {
       removeCallbacks(state.props);
@@ -42,7 +42,7 @@ const modalSlice = createSlice({
       state.title = "";
       state.component = null;
       state.props = {};
-      state.maxWidth = "sm";
+      state.maxWidth = "md";
     },
   },
 });

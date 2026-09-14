@@ -178,7 +178,7 @@ const CustomTable = ({
 
                         py: 2,
 
-                        whiteSpace: "nowrap",
+                        whiteSpace: column?.wrap ? "normal" : "nowrap",
 
                         ...getColumnWidthStyles(column),
 
@@ -364,7 +364,8 @@ const CustomTable = ({
 
                             borderBottom: "1px solid #F1F5F9",
 
-                            whiteSpace: "nowrap",
+                            whiteSpace: column?.wrap ? "normal" : "nowrap",
+                            overflowWrap: column?.wrap ? "anywhere" : "normal",
 
                             ...getColumnWidthStyles(column),
 

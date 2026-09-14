@@ -146,10 +146,10 @@ export default function BugsFormModal({ resource, record, onSaved }) {
         />
 
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-          <CustomDropdown label="Project" name="projectId" value={values.projectId} options={projects} onChange={(value) => { updateValue("projectId", value); updateValue("taskId", ""); }} placeholder="Select project" required />
-          <ReusableInput label="New task name (optional)" name="taskTitle" value={values.taskTitle} onChange={(event) => updateValue("taskTitle", event.target.value)} placeholder="Enter task name for developer" />
-          <CustomDropdown label="Module" name="moduleId" value={values.moduleId} options={modules} onChange={(value) => updateValue("moduleId", value)} placeholder="Choose module" />
-          <CustomDropdown label="Related existing task (optional)" name="taskId" value={values.taskId} options={tasks} onChange={(value) => updateValue("taskId", value)} placeholder="Select related task" />
+          <CustomDropdown sx={{ flex: 1, minWidth: 0 }} label="Project" name="projectId" value={values.projectId} options={projects} onChange={(value) => { updateValue("projectId", value); updateValue("taskId", ""); }} placeholder="Select project" required />
+          <ReusableInput sx={{ flex: 1, minWidth: 0 }} label="New task name (optional)" name="taskTitle" value={values.taskTitle} onChange={(event) => updateValue("taskTitle", event.target.value)} placeholder="Enter task name for developer" />
+          <CustomDropdown sx={{ flex: 1, minWidth: 0 }} label="Module" name="moduleId" value={values.moduleId} options={modules} onChange={(value) => updateValue("moduleId", value)} placeholder="Choose module" />
+          <CustomDropdown sx={{ flex: 1, minWidth: 0 }} label="Related existing task (optional)" name="taskId" value={values.taskId} options={tasks} onChange={(value) => updateValue("taskId", value)} placeholder="Select related task" />
         </Stack>
 
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>

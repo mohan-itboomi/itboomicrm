@@ -1,7 +1,7 @@
 import { Box, Divider, Typography } from "@mui/material";
 
-const fields = ["date", "completedTasks", "inProgressTasks", "blockers", "tomorrowPlan", "totalMinutes", "status"];
-const labels = { completedTasks: "Completed Tasks", inProgressTasks: "In-progress Tasks", tomorrowPlan: "Tomorrow's Plan", totalMinutes: "Total Minutes" };
+const fields = ["date", "completedTasks", "inProgressTasks", "blockers", "tomorrowPlan", "status"];
+const labels = { completedTasks: "Task Completion Description", inProgressTasks: "In-progress Tasks", blockers: "Blocker Description", tomorrowPlan: "Tomorrow's Plan" };
 const valueOf = (value, field) => {
 	if (Array.isArray(value)) return value.map((item) => item?.title || item?.name || item?._id || item).join(", ") || "—";
 	if (field === "date" && value) return new Date(value).toLocaleDateString();

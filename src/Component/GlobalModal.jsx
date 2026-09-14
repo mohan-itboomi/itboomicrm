@@ -16,7 +16,7 @@ const GlobalModal = () => {
     title,
     component,
     props,
-    maxWidth = "sm",
+    maxWidth = "md",
   } = useSelector((state) => state?.modal);
 
   const handleClose = () => {

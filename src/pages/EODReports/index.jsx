@@ -15,13 +15,10 @@ const fields = [
   "date",
   "completedTasks",
   "inProgressTasks",
-  "totalMinutes",
   "blockers",
   "tomorrowPlan",
   "status",
 ];
-const formatMinutes = (minutes) =>
-  `${Math.floor((Number(minutes) || 0) / 60)}h ${Math.round((Number(minutes) || 0) % 60)}m`;
 export default function EODReports() {
   const dispatch = useDispatch();
   const [rows, setRows] = useState([]);
@@ -59,6 +56,10 @@ export default function EODReports() {
         columns={[
           ...fields.map((field) => ({
             field,
+            ...( ["completedTasks", "inProgressTasks", "blockers", "tomorrowPlan"].includes(field) && {
+              wrap: true,
+              width: 220,
+            }),
             headerName:
               field === "employeeId"
                 ? "Employee"
@@ -66,12 +67,13 @@ export default function EODReports() {
                   ? "Completed Tasks"
                   : field === "inProgressTasks"
                     ? "In-progress Tasks"
-                    : field === "totalMinutes"
-                      ? "Total Work Time"
-                      : field,
+                    : field === "blockers"
+                      ? "Blocker Description"
+                      : field === "completedTasks"
+                        ? "Task Completion Description"
+                        : field,
             render: (row) => {
               const value = row[field];
-              if (field === "totalMinutes") return formatMinutes(value);
               return Array.isArray(value)
                 ? value
                     .map(
