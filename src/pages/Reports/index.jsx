@@ -45,7 +45,7 @@ export default function Reports() {
     const item = result[key] || { name: row.projectId?.name || "Unknown project", implementation: 0, testing: 0, bugFixing: 0 };
     const minutes = Number(row.durationMinutes) || 0;
     if (row.taskId?.category === "Bug Fixing") item.bugFixing += minutes;
-    else if (row.taskId?.status === "Testing") item.testing += minutes;
+    else if (row.taskId?.category === "Testing" || row.taskId?.status === "Testing") item.testing += minutes;
     else item.implementation += minutes;
     result[key] = item;
     return result;

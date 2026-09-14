@@ -311,7 +311,7 @@ export default function TimerPage() {
                       {session.taskId?.title || "Paused task"}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Paused session
+                      {session.projectId?.name || "Project not assigned"} · Paused session
                     </Typography>
                   </Box>
                   <Button

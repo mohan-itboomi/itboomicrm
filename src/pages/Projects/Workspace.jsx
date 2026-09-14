@@ -28,7 +28,7 @@ import { ApiService } from "../../Api/ApiService";
 import CustomPageHeader from "../../Component/CustomPageHeader";
 import CustomDropdown from "../../Component/CustomDropdown";
 
-const categories = ["Project Implementation", "Bug Fixing"];
+const categories = ["Project Implementation", "Testing", "Bug Fixing"];
 const initialModule = {
   name: "",
   description: "",
@@ -257,6 +257,9 @@ export default function ProjectWorkspace() {
   );
   const bugFixingTasks = timingSummary.tasks.filter(
     (row) => row.category === "Bug Fixing",
+  );
+  const testingTasks = timingSummary.tasks.filter(
+    (row) => row.category === "Testing",
   );
   const taskOptions = timingSummary.tasks
     .map((row) => row.task)
@@ -768,6 +771,13 @@ export default function ProjectWorkspace() {
                 title="Project Implementation"
                 tasks={implementationTasks}
                 color="primary"
+                onDelete={deleteTask}
+                onEdit={editTask}
+              />
+              <TaskSection
+                title="Testing"
+                tasks={testingTasks}
+                color="warning"
                 onDelete={deleteTask}
                 onEdit={editTask}
               />

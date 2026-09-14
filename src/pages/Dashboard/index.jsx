@@ -79,10 +79,10 @@ export default function Dashboard() {
       "people online in the workspace",
     ],
     [
-      "Onboard projects",
-      counts.onboardProjects,
+      "Total projects",
+      counts.projects,
       FolderRoundedIcon,
-      "projects ready for delivery tracking",
+      `${counts.onboardProjects || 0} onboarded`,
     ],
     [
       "Open tasks",
@@ -113,7 +113,7 @@ export default function Dashboard() {
     const category = item._id?.category;
     const status = item._id?.status;
     if (category === "Project Implementation") result.implementation += item.count;
-    if (status === "Testing") result.testing += item.count;
+    if (category === "Testing" || status === "Testing") result.testing += item.count;
     if (category === "Bug Fixing" && ["Completed", "Testing"].includes(status)) result.bugFixed += item.count;
     return result;
   }, { implementation: 0, testing: 0, bugFixed: 0 });
