@@ -500,7 +500,7 @@ export default function BusinessDevelopment() {
                     md: "repeat(3, minmax(0, 1fr))",
                     lg: "repeat(5, minmax(0, 1fr))",
                   },
-                  gap: 1.5,
+                  gap: 2,
                 }}
               >
                 {projects.map((project) => {
@@ -510,7 +510,10 @@ export default function BusinessDevelopment() {
                       key={project._id}
                       onClick={() => selectProject(project)}
                       sx={{
-                        p: 2,
+                        p: 2.25,
+                        minHeight: 88,
+                        display: "flex",
+                        alignItems: "center",
                         border:
                           selected?._id === project._id
                             ? "2px solid #175cd3"
@@ -523,16 +526,28 @@ export default function BusinessDevelopment() {
                         "&:hover": {
                           borderColor: "#80CBDC",
                           transform: "translateY(-1px)",
+                          boxShadow: "0 8px 18px rgba(15, 23, 42, 0.08)",
                         },
                       }}
                     >
                       <Stack
-                        direction="row"
-                        justifyContent="space-between"
-                        alignItems="center"
-                        spacing={1}
+                        direction="column"
+                        alignItems="flex-start"
+                        spacing={1.5}
+                        sx={{ width: "100%", minWidth: 0 }}
                       >
-                        <Typography fontWeight={750}>{project.name}</Typography>
+                        <Typography
+                          fontWeight={750}
+                          sx={{
+                            minWidth: 0,
+                            fontSize: { xs: "1rem", sm: "1.05rem" },
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {project.name}
+                        </Typography>
                         <Chip
                           size="small"
                           label={project.status || "Not Started"}
@@ -543,6 +558,7 @@ export default function BusinessDevelopment() {
                                 ? "warning"
                                 : "default"
                           }
+                          sx={{ flexShrink: 0, fontWeight: 600 }}
                         />
                       </Stack>
 
